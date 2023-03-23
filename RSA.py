@@ -30,10 +30,11 @@ def sign(message):
     
     print(f'p = {p:x}, q = {q:x}, n = {modulus:x}, t = {totient:x}')
     print(f'received message: {message}')
+    hash = elf_hash(message)
+    print(f'message hash: {hash:x}')
     public = 65537
     private = euclidian_key(public, totient)
-    print(private)
-    e = elf_hash(message)
+    print(f'signing with the following private key: {private:x}')
 
 # Use extended euclidian algorithm to obtain private key
 # https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
@@ -45,8 +46,8 @@ def euclidian_key(public, totient):
     
     while newr != 0:
         quotient = r // newr
-        (t, newt) = (newt, t - quotient * newt)
-        (r, newr) = (newr, r - quotient * newr)
+        t, newt = newt, t - quotient * newt
+        r, newr = newr, r - quotient * newr
         
     if r > 1:
         return "A is not invertible"
@@ -56,11 +57,10 @@ def euclidian_key(public, totient):
     return t
     
 
-
 def verify():
     pass
 
-# Generate 2 random prime numbers, call the Miller Rabin test for assistance
+# Generate 2 random prime numbers, use the Miller Rabin test
 def generate_primes():
     primes = []
     while len(primes) < 2: 
@@ -102,17 +102,32 @@ def miller_rabin(number):
 def power(a, b, p):
     result = 1
     
+    #Update a if >= p
     a = a % p
     while (b > 0):
-        if (int(b) & 1):
+        #If b is odd, multiply a with result
+        if (int(b) & 1):    
             result = (result * a) % p
         b = int(b)>>1
         a = (a * a) % p
     return result
     
+# Elf Hashing algorithm used to hash message
+# https://en.wikipedia.org/wiki/PJW_hash_function
 def elf_hash(message):
+    h, high = 0, 0
     
-    pass
+    #Convert string into bytes and iterate over them
+    for i in message.encode():
+        #Shift over by 4 bits
+        h = (h << 4) + i
+        high = h & 0xF0000000
+        
+        if high != 0:
+            h = h ^ high >> 24
+        h = h & (~high)
+        
+    return h
 
 
 def main():
