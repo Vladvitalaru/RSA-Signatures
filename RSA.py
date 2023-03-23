@@ -19,16 +19,15 @@ import random
 def sign(message):
     p, q = generate_primes()
     message = message.strip('"')
-    print(message)
+    # print(message)
     p = 0x9da5
     q = 0xb28b
-    print(p)
-    print(q)
+    # print(p)
+    # print(q)
     modulus = p * q
-    print(modulus)
+    # print(modulus)
     # totient = (p - 1) * (q - 1)
     totient = int("6df10268", base=16)
-    print(totient)
     
     print(f'p = {p:x}, q = {q:x}, n = {modulus:x}, t = {totient:x}')
     print(f'received message: {message}')
@@ -64,9 +63,7 @@ def euclidian_key(public, totient):
     return t
     
 
-def verify(modulus, message, signature):
 
-    pass
 
 # Generate 2 random prime numbers, use the Miller Rabin test
 def generate_primes():
@@ -137,26 +134,35 @@ def elf_hash(message):
         
     return h
 
+def verify(modulus, message, signature):
+    #Convert strings to int
+    modulus = int(modulus,base=16)
+    signature = int(signature, base=16)
+    
+    #Compute hash from message
+    hash = elf_hash(message)
+    uninverted_hash = power(signature, 65537, modulus)
+    if hash == uninverted_hash:
+        print("message verified!\n")
+        return
+    else:
+        print("!!! message forged !!!\n")
+        return
 
 def main():
     print()
     for line in sys.stdin:
         line = line.strip().split(" ", 1)
-        print(line)        
         mode = line[0]
         if mode == "sign": #If we have to sign
             message = line[1]
-            sign(message)            
+            sign(message)
             
         elif mode == "verify": #If we have to verify
-            print("verify mode")
             line[1] = line[1].strip().split('"')
-            modulus = line[1][0]
+            modulus = line[1][0].strip(" ")
             message = line[1][1]
-            signature = line[1][2]
-            print(f'modulus: {modulus}')
-            print(f'message: {message}')
-            print(f'signature: {signature}')
+            signature = line[1][2].strip(" ")
             verify(modulus, message, signature)
     
         else:
