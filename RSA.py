@@ -20,6 +20,8 @@ def sign(message):
     p, q = generate_primes()
     message = message.strip('"')
     print(message)
+    p = 0x9da5
+    q = 0xb28b
     print(p)
     print(q)
     modulus = p * q
@@ -35,6 +37,11 @@ def sign(message):
     public = 65537
     private = euclidian_key(public, totient)
     print(f'signing with the following private key: {private:x}')
+    signed = power(hash, private, modulus) 
+    print(f'signed hash: {signed:x}')
+    uninverted_hash = power(signed, public, modulus)
+    print(f'uninverted message to ensure integrity: {uninverted_hash:x}')
+    print(f'complete output for verification:\n{modulus:x} "{message}" {signed:x}\n')
 
 # Use extended euclidian algorithm to obtain private key
 # https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
@@ -57,7 +64,8 @@ def euclidian_key(public, totient):
     return t
     
 
-def verify():
+def verify(modulus, message, signature):
+
     pass
 
 # Generate 2 random prime numbers, use the Miller Rabin test
@@ -137,7 +145,6 @@ def main():
         print(line)        
         mode = line[0]
         if mode == "sign": #If we have to sign
-            print("sign mode")
             message = line[1]
             sign(message)            
             
@@ -150,6 +157,7 @@ def main():
             print(f'modulus: {modulus}')
             print(f'message: {message}')
             print(f'signature: {signature}')
+            verify(modulus, message, signature)
     
         else:
             print("Incorrect Input!")
