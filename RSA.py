@@ -2,13 +2,13 @@
 #CS427 
 #RSA Signatures
 
-
 '''
 The two modes:
 sign "message text"
 verify <modulus_n> "message text" <message_signature>
 '''
 
+# Use euclidian algo to get private key, if negative mod, get wrap around
 # 65,537 (public key)
 
 
@@ -18,10 +18,43 @@ import random
 # Sign mode
 def sign(message):
     p, q = generate_primes()
-    
+    message = message.strip('"')
     print(message)
     print(p)
     print(q)
+    modulus = p * q
+    print(modulus)
+    # totient = (p - 1) * (q - 1)
+    totient = int("6df10268", base=16)
+    print(totient)
+    
+    print(f'p = {p:x}, q = {q:x}, n = {modulus:x}, t = {totient:x}')
+    print(f'received message: {message}')
+    public = 65537
+    private = euclidian_key(public, totient)
+    print(private)
+    e = elf_hash(message)
+
+# Use extended euclidian algorithm to obtain private key
+# https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
+def euclidian_key(public, totient):
+    t = 0
+    newt = 1
+    r = totient
+    newr = public
+    
+    while newr != 0:
+        quotient = r // newr
+        (t, newt) = (newt, t - quotient * newt)
+        (r, newr) = (newr, r - quotient * newr)
+        
+    if r > 1:
+        return "A is not invertible"
+    if t < 0:
+        t = t + totient
+            
+    return t
+    
 
 
 def verify():
@@ -77,8 +110,10 @@ def power(a, b, p):
         a = (a * a) % p
     return result
     
-def elf_hash():
+def elf_hash(message):
+    
     pass
+
 
 def main():
     print()
