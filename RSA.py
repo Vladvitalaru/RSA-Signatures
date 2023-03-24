@@ -2,40 +2,34 @@
 #CS427 
 #RSA Signatures
 
-'''
-The two modes:
-sign "message text"
-verify <modulus_n> "message text" <message_signature>
-'''
-
-# Use euclidian algo to get private key, if negative mod, get wrap around
-# 65,537 (public key)
-
-
 import sys
 import random
 
-# Sign mode
+# Sign mode which generates 2 primes, a modulus and totient. Creates a signed hash for verification
 def sign(message):
     p, q = generate_primes()
     message = message.strip('"')
-    # print(message)
-    p = 0x9da5
-    q = 0xb28b
-    # print(p)
-    # print(q)
-    modulus = p * q
-    # print(modulus)
-    # totient = (p - 1) * (q - 1)
-    totient = int("6df10268", base=16)
+    # p = 0x9da5 !hardcoded primes for testing
+    # q = 0xb28b
     
+    # Calculate modulus and totient from generarted primes
+    modulus = p * q 
+    totient = (p - 1) * (q - 1)
+    
+    # totient = int("6df10268", base=16) !hardcoded totient for testing
     print(f'p = {p:x}, q = {q:x}, n = {modulus:x}, t = {totient:x}')
     print(f'received message: {message}')
+    
+    #Generate hash using elf hashing
     hash = elf_hash(message)
     print(f'message hash: {hash:x}')
     public = 65537
+    
+    #Generate private key using extended euclidian algorithm
     private = euclidian_key(public, totient)
     print(f'signing with the following private key: {private:x}')
+    
+    #Generate signed hash using modular exponentiation
     signed = power(hash, private, modulus) 
     print(f'signed hash: {signed:x}')
     uninverted_hash = power(signed, public, modulus)
@@ -63,8 +57,6 @@ def euclidian_key(public, totient):
     return t
     
 
-
-
 # Generate 2 random prime numbers, use the Miller Rabin test
 def generate_primes():
     primes = []
@@ -81,7 +73,7 @@ def generate_primes():
 def miller_rabin(number):
     round = 0
     
-    while round < 5: #Do 5 rounds of the Miller Rabin Test
+    while round < 20: #Do 20 rounds of the Miller Rabin Test
         if number % 2 == 0 or number<=1: 
             return False
         
@@ -134,6 +126,7 @@ def elf_hash(message):
         
     return h
 
+# Verify given modulus, message and signature by comparing the uninverted hash with the message hash
 def verify(modulus, message, signature):
     #Convert strings to int
     modulus = int(modulus,base=16)
@@ -141,7 +134,11 @@ def verify(modulus, message, signature):
     
     #Compute hash from message
     hash = elf_hash(message)
+    
+    #Compute hash from given signature, modulus and public key
     uninverted_hash = power(signature, 65537, modulus)
+    
+    #Compare hashes for verification
     if hash == uninverted_hash:
         print("message verified!\n")
         return
@@ -154,20 +151,30 @@ def main():
     for line in sys.stdin:
         line = line.strip().split(" ", 1)
         mode = line[0]
+        
         if mode == "sign": #If we have to sign
-            message = line[1]
+            try:
+                message = line[1]
+            except:
+                print("Incorrect Input!\n") 
+                continue
+                        
             sign(message)
             
         elif mode == "verify": #If we have to verify
-            line[1] = line[1].strip().split('"')
-            modulus = line[1][0].strip(" ")
-            message = line[1][1]
-            signature = line[1][2].strip(" ")
+            try:
+                line[1] = line[1].strip().split('"')
+                modulus = line[1][0].strip(" ")
+                message = line[1][1]
+                signature = line[1][2].strip(" ")
+            except:
+                print("Incorrect Input!\n")
+                continue
+            
             verify(modulus, message, signature)
     
         else:
-            print("Incorrect Input!")
-
+            print("Incorrect Input!\n")
 
 if __name__ == "__main__":
     main()
